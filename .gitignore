@@ -4,5 +4,11 @@
 
 *.csv
 
+*.pyc
+
 */data/
+
+*/.ipynb_checkpoints/
+
+bnp/notes.txt
 
