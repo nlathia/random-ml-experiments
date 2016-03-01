@@ -2,6 +2,7 @@ from os import path
 
 TARGET_CLASS = 'target'
 ROW_ID = 'ID'
+PREDICTION = 'PredictedProb'
 
 DATA_PATH = '/Users/neal/Desktop/kaggle-experiments/bnp/data'
 

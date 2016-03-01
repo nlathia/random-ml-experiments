@@ -4,7 +4,7 @@ import dataset
 
 pd.options.mode.chained_assignment = None  # Ignore copy warning
 
-data_set = pd.read_csv(dataset.FULL_TRAIN_FILE)
+data_set = pd.read_csv(dataset.ENCODED_TRAIN_FILE)
 
 X = data_set.drop(dataset.TARGET_CLASS, axis=1)
 y = data_set[dataset.TARGET_CLASS]
