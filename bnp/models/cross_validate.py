@@ -1,5 +1,6 @@
 from os import path
 from csv import writer
+from sys import argv
 
 from sklearn.ensemble import ExtraTreesClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
@@ -36,7 +37,13 @@ def load_file(data_file, new_feature_files):
     for new_feature_file in new_feature_files:
         print '\tRead', new_feature_file
         new_features = pd.read_csv(new_feature_file)
-        X = pd.concat([X, new_features], axis=1)
+        new_features.drop(dataset.ROW_ID, axis=1, inplace=True)
+        new_columns = set(new_features.columns)
+        old_columns = set(X.columns)
+        if len(old_columns.intersection(new_columns)) == 0:
+            X = pd.concat([X, new_features], axis=1)
+        else:
+            raise Exception('Unimplemented: replace columns')
     return X, y, row_ids
 
 
@@ -69,9 +76,11 @@ def cross_validate(name, model, features=[]):
         loss = log_loss(y_test, y_pred)
         losses.append(loss)
         print '\tLoss: ', loss
+        print name, i, loss
 
         result = pd.DataFrame({dataset.ROW_ID: row_ids, dataset.PREDICTION: y_pred[:, 1]})
         result.to_csv(result_file_name(directory, features, name), index=False)
+
     print 'CV Result', np.mean(losses), np.std(losses)
     return np.mean(losses), np.std(losses)
 
@@ -110,27 +119,28 @@ def cross_validate_xgb(name='xgb', features=[]):
             rows = writer(out)
             rows.writerow([dataset.ROW_ID, dataset.PREDICTION])
             rows.writerows(zip(row_ids, y_pred))
-        break
+
     print 'CV Result', np.mean(losses), np.std(losses)
     return np.mean(losses), np.std(losses)
 
 
 if __name__ == '__main__':
-    # name = 'corr-0.9'
-    # features = [name]
-    # models = {
-    #     'LogisticRegression': LogisticRegression(),
-    #     'RandomForest-500-gini': RandomForestClassifier(n_estimators=500, criterion='gini', n_jobs=-1),
-    #     'RandomForest-500-entropy': RandomForestClassifier(n_estimators=500, criterion='entropy', n_jobs=-1),
-    #     'ExtraTrees-500-gini': ExtraTreesClassifier(n_estimators=500, criterion='gini', n_jobs=-1),
-    #     'ExtraTrees-500-entropy': ExtraTreesClassifier(n_estimators=500, criterion='entropy', n_jobs=-1)
-    # }
-    #
-    # with open(name + '-result.csv', 'w') as out:
-    #     rows = writer(out)
-    #     for n, m in models.iteritems():
-    #         avg, std = cross_validate(n, m, features)
-    #         rows.writerow([name, n, avg, std])
-    cross_validate_xgb()
+    name = 'corr-' + argv[1]
+    features = [name]
+    models = {
+        'LogisticRegression': LogisticRegression(),
+        'RandomForest-500-gini': RandomForestClassifier(n_estimators=500, criterion='gini', n_jobs=-1),
+        'RandomForest-500-entropy': RandomForestClassifier(n_estimators=500, criterion='entropy', n_jobs=-1),
+        'ExtraTrees-500-gini': ExtraTreesClassifier(n_estimators=500, criterion='gini', n_jobs=-1),
+        'ExtraTrees-500-entropy': ExtraTreesClassifier(n_estimators=500, criterion='entropy', n_jobs=-1)
+    }
+
+    with open(name + 'result.csv', 'w') as out:
+        rows = writer(out)
+        for n, m in models.iteritems():
+            avg, std = cross_validate(n, m, features)
+            rows.writerow([name, n, avg, std])
+
+    # cross_validate_xgb()
 
 

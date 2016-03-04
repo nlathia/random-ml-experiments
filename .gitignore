@@ -12,3 +12,5 @@
 
 bnp/notes.txt
 
+*.~lock*
+
