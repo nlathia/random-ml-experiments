@@ -29,3 +29,8 @@ print 'Extra Trees', '\t', et_loss
 print ''
 print 'Average', '\t', log_loss(y_test, preds['Average'].values)
 
+# ensemble = LinearRegression()
+# ensemble.fit(E_train, y_train)
+# y_pred = MinMaxScaler().fit_transform(ensemble.predict(E_test).reshape(-1, 1))
+# print 'Linear Ensemble', '\t', log_loss(y_test, y_pred)
+
