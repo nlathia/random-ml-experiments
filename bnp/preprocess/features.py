@@ -23,7 +23,10 @@ def add_correlated_differences(alpha=0.5):
         test = pd.read_csv(path.join(directory, dataset.TEST_FILE))
 
         new_train = pd.DataFrame()
+        new_train[dataset.ROW_ID] = train[dataset.ROW_ID]
+
         new_test = pd.DataFrame()
+        new_test[dataset.ROW_ID] = test[dataset.ROW_ID]
         corrs = set()
 
         for a in (f for f in train.columns if dtypes[f] != 'object'):
@@ -40,8 +43,8 @@ def add_correlated_differences(alpha=0.5):
                             new_test[new_feature] = abs(test[a] - test[b])
 
         print 'New columns', len(new_train.columns)
-        new_train.to_csv(path.join(directory, 'corr-' + str(alpha) + dataset.TRAIN_FILE))
-        new_test.to_csv(path.join(directory, 'corr-' + str(alpha) + dataset.TEST_FILE))
+        new_train.to_csv(path.join(directory, 'corr-' + str(alpha) + dataset.TRAIN_FILE), index=False)
+        new_test.to_csv(path.join(directory, 'corr-' + str(alpha) + dataset.TEST_FILE), index=False)
 
 
 add_correlated_differences(alpha=0.9)
