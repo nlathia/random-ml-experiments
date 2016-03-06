@@ -80,8 +80,18 @@ def apply_to_subsets():
         # add_correlated_differences(train, test, dtypes, directory, alpha=0.5)
         scale_features(train, test, dtypes, directory)
 
+
+def apply_to_main():
+    dtypes = load_feature_types()
+    print 'Read', dataset.ENCODED_TRAIN_FILE
+    train = pd.read_csv(dataset.ENCODED_TRAIN_FILE)
+    print 'Read', dataset.ENCODED_TEST_FILE
+    test = pd.read_csv(dataset.ENCODED_TEST_FILE)
+    scale_features(train, test, dtypes, dataset.DATA_PATH)
+
 if __name__ == '__main__':
-    apply_to_subsets()
+    # apply_to_subsets()
+    apply_to_main()
 
 
 

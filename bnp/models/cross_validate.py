@@ -20,59 +20,12 @@ def result_file_name(directory, features, name):
         return path.join(directory, name + '.csv')
 
 
-def load_file(data_file, new_feature_files):
-    """
-    Loads some data and splits into X, y
-    :param data_file: Full path to CSV file
-    :param new_feature_files: Additional features
-    :return: X, y, ids
-    """
-    print '\tRead', data_file
-    data = pd.read_csv(data_file)
-    X = data.drop(dataset.TARGET_CLASS, axis=1)
-    X.drop(dataset.ROW_ID, axis=1, inplace=True)
-    y = data[dataset.TARGET_CLASS]
-    row_ids = data[dataset.ROW_ID]
-
-    print '\tFeatures', new_feature_files
-    for new_feature_file in new_feature_files:
-        print '\tRead', new_feature_file
-        new_features = pd.read_csv(new_feature_file)
-        for igf in dataset.IGNORED_COLUMNS:
-            if igf in new_features.columns:
-                new_features.drop(igf, axis=1, inplace=True)
-        new_columns = set(new_features.columns)
-        old_columns = set(X.columns)
-        if len(old_columns.intersection(new_columns)) == 0:
-            X = pd.concat([X, new_features], axis=1)
-        else:
-            for feature in new_features.columns:
-                print '\tReplace', feature
-                X[feature] = new_features[feature]
-    return X, y, row_ids
-
-
-def load_subset(directory, feature_files):
-    """
-    Loads a subset of the data
-    :param directory: The subset's location
-    :param feature_files: Any extra feature files
-    :return: training Xs and test ys
-    """
-    train_features = [path.join(directory, f + dataset.TRAIN_FILE) for f in feature_files]
-    test_features = [path.join(directory, f + dataset.TEST_FILE) for f in feature_files]
-
-    X_train, y_train, _ = load_file(path.join(directory, dataset.TRAIN_FILE), train_features)
-    X_test, y_test, row_ids = load_file(path.join(directory, dataset.TEST_FILE), test_features)
-    return X_train, X_test, y_train, y_test, row_ids
-
-
 def cross_validate(name, model, features=[]):
     losses = []
     for i in xrange(0, 10):
         print 'Subset', i
         directory = path.join(dataset.DATA_PATH, dataset.SUBSET + str(i))
-        X_train, X_test, y_train, y_test, row_ids = load_subset(directory, features)
+        X_train, X_test, y_train, y_test, row_ids = dataset.load_subset(directory, features)
 
         print '\tTrain', name
         model.fit(X_train, y_train)
@@ -108,7 +61,7 @@ def cross_validate_xgb(name='xgb', features=[]):
     for i in xrange(0, 10):
         print 'Subset', i
         directory = path.join(dataset.DATA_PATH, dataset.SUBSET + str(i))
-        X_train, X_test, y_train, y_test, row_ids = load_subset(directory, features)
+        X_train, X_test, y_train, y_test, row_ids = dataset.load_subset(directory, features)
 
         xgtrain = xgb.DMatrix(X_train, y_train)
         print '\tTrain...'
