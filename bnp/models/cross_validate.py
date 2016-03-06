@@ -1,6 +1,5 @@
 from os import path
 from csv import writer
-from sys import argv
 
 from sklearn.ensemble import ExtraTreesClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
@@ -25,7 +24,8 @@ def load_file(data_file, new_feature_files):
     """
     Loads some data and splits into X, y
     :param data_file: Full path to CSV file
-    :return: X, y
+    :param new_feature_files: Additional features
+    :return: X, y, ids
     """
     print '\tRead', data_file
     data = pd.read_csv(data_file)
@@ -34,16 +34,21 @@ def load_file(data_file, new_feature_files):
     y = data[dataset.TARGET_CLASS]
     row_ids = data[dataset.ROW_ID]
 
+    print '\tFeatures', new_feature_files
     for new_feature_file in new_feature_files:
         print '\tRead', new_feature_file
         new_features = pd.read_csv(new_feature_file)
-        new_features.drop(dataset.ROW_ID, axis=1, inplace=True)
+        for igf in dataset.IGNORED_COLUMNS:
+            if igf in new_features.columns:
+                new_features.drop(igf, axis=1, inplace=True)
         new_columns = set(new_features.columns)
         old_columns = set(X.columns)
         if len(old_columns.intersection(new_columns)) == 0:
             X = pd.concat([X, new_features], axis=1)
         else:
-            raise Exception('Unimplemented: replace columns')
+            for feature in new_features.columns:
+                print '\tReplace', feature
+                X[feature] = new_features[feature]
     return X, y, row_ids
 
 
@@ -106,10 +111,10 @@ def cross_validate_xgb(name='xgb', features=[]):
         X_train, X_test, y_train, y_test, row_ids = load_subset(directory, features)
 
         xgtrain = xgb.DMatrix(X_train, y_train)
-        xgtest = xgb.DMatrix(X_test)
+        print '\tTrain...'
+        clf = xgb.train(xgboost_params, xgtrain, num_boost_round=boost_round, verbose_eval=False, maximize=False)
 
-        print '\tTrain', name
-        clf = xgb.train(xgboost_params, xgtrain, num_boost_round=boost_round, verbose_eval=True, maximize=False)
+        xgtest = xgb.DMatrix(X_test)
         y_pred = clf.predict(xgtest, ntree_limit=clf.best_iteration)
         loss = log_loss(y_test, y_pred)
         losses.append(loss)
@@ -125,8 +130,7 @@ def cross_validate_xgb(name='xgb', features=[]):
 
 
 if __name__ == '__main__':
-    name = 'corr-' + argv[1]
-    features = [name]
+    fs = ['scaled-']
     models = {
         'LogisticRegression': LogisticRegression(),
         'RandomForest-500-gini': RandomForestClassifier(n_estimators=500, criterion='gini', n_jobs=-1),
@@ -135,12 +139,11 @@ if __name__ == '__main__':
         'ExtraTrees-500-entropy': ExtraTreesClassifier(n_estimators=500, criterion='entropy', n_jobs=-1)
     }
 
-    with open(name + 'result.csv', 'w') as out:
+    with open('-'.join(fs) + 'result.csv', 'w') as out:
         rows = writer(out)
         for n, m in models.iteritems():
-            avg, std = cross_validate(n, m, features)
-            rows.writerow([name, n, avg, std])
-
-    # cross_validate_xgb()
+            avg, std = cross_validate(n, m, fs)
+            rows.writerow([n, n, avg, std])
+            #avg, std = cross_validate_xgb(features=fs)
 
 

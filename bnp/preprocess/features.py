@@ -46,16 +46,21 @@ def add_correlated_differences(train, test, dtypes, directory, alpha=0.5):
 def scale_features(train, test, dtypes, directory):
     new_train = train.replace(-1, np.nan)
     new_test = test.replace(-1, np.nan)
-    for f in (f for f in train.columns if f not in dataset.IGNORED_COLUMNS):
-        if dtypes[f] != 'object':
+    for f in new_train.columns:
+        if f in dataset.IGNORED_COLUMNS or dtypes[f] == 'object':
+            print '\tDrop', f, dtypes[f]
+            new_train.drop(f, inplace=True, axis=1)
+            if f in new_test.columns:
+                new_test.drop(f, inplace=True, axis=1)
+        else:
             mean = new_train[f].mean()
             std = new_train[f].std()
-            print '\tScaling', f, mean, std
+            print '\tScaling', f, mean, std, new_train[f].count(), len(new_train[f].values)
             new_train[f] = (new_train[f] - mean) / std
             new_test[f] = (new_test[f] - mean) / std
-    new_train.fillna(0)
+    new_train.fillna(0, inplace=True)
+    new_test.fillna(0, inplace=True)
     new_train.to_csv(path.join(directory, 'scaled-' + dataset.TRAIN_FILE), index=False)
-    new_test.fillna(0)
     new_test.to_csv(path.join(directory, 'scaled-' + dataset.TEST_FILE), index=False)
 
 
@@ -64,8 +69,12 @@ def apply_to_subsets():
     for subset in xrange(0, 10):
         print 'Subset', subset
         directory = path.join(dataset.DATA_PATH, 'subset' + str(subset))
-        train = pd.read_csv(path.join(directory, dataset.TRAIN_FILE))
-        test = pd.read_csv(path.join(directory, dataset.TEST_FILE))
+        train_file = path.join(directory, dataset.TRAIN_FILE)
+        print '\tRead', train_file
+        train = pd.read_csv(train_file)
+        test_file = path.join(directory, dataset.TEST_FILE)
+        print '\tRead', test_file
+        test = pd.read_csv(test_file)
 
         # add_correlated_differences(train, test, dtypes, directory, alpha=0.9)
         # add_correlated_differences(train, test, dtypes, directory, alpha=0.5)
