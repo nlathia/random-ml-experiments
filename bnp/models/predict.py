@@ -1,5 +1,6 @@
 from os import path
 from csv import writer
+import PrettyTable as pt
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
