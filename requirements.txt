@@ -3,5 +3,5 @@ pandas
 matplotlib
 seaborn
 nltk
-keras==1.2.2
+keras==2.13.1
 scikit-learn
